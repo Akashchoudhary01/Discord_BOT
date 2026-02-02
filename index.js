@@ -21,8 +21,10 @@ client.once("ready", () => {
 // Listen to messages
 client.on("messageCreate", (message) => {
   if (message.author.bot) return;
-
-  console.log(message.content);
+  
+  message.reply({
+   content: "Hi From BOT !"
+  })
 });
 
 // Login bot
