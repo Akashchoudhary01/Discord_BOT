@@ -2,7 +2,7 @@ import { Client, GatewayIntentBits } from "discord.js";
 import dotenv from "dotenv";
 import { ConnectToDb } from "./connect.js";
 import { nanoid } from "nanoid";
-import URL from "./Models/Url.Model.js"; // Import model
+import LINK from './models/urlModel.js'// Import model
 
 dotenv.config();
 
@@ -27,22 +27,30 @@ client.once("ready", () => {
 
 /* Create Short URL */
 const handleGenerateNewShortUrl = async (originalUrl) => {
-  const shortId = nanoid(6);
 
-  await URL.create({
-    shortId,
+  const existing = await LINK.findOne({ originalUrl });
+
+  if (existing) return existing.shortUrl;
+
+  const shortUrl = nanoid(6);
+
+  const newUrl = await LINK.create({
+    shortUrl,
     originalUrl,
   });
 
-  return shortId;
+  return newUrl.shortUrl;
 };
+
+
 
 /* Message Listener */
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
   // Command: !create <url>
-  if (message.content.startsWith("!create")) {
+  if (message.content.startsWith("create")) {
+
     const url = message.content.split(" ")[1];
 
     if (!url) {
@@ -53,16 +61,14 @@ client.on("messageCreate", async (message) => {
       const shortId = await handleGenerateNewShortUrl(url);
 
       return message.reply(
-        `✅ Short URL Created:\nhttp://localhost:5001/url/${shortId}`
+        `✅ Short URL Created:\nhttp://localhost:5001/${shortId}`
       );
+
     } catch (err) {
-      console.log(err);
+      console.log("DB Error:", err);
       return message.reply("❌ Error creating short URL");
     }
   }
-
-  // Default Reply
-  message.reply("Hi from BOT 🤖");
 });
 
 /* Login */
